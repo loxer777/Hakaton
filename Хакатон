@@ -1,0 +1,140 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <cctype>
+#include <set>
+#include <iterator>
+
+int countA(const std::string& line) {
+    return std::count(line.begin(), line.end(), 'а');
+}
+
+int countWords(const std::string& line) {
+    std::istringstream iss(line);
+    return std::distance(std::istream_iterator<std::string>(iss), std::istream_iterator<std::string>());
+}
+
+std::string removeExtraSpaces(const std::string& line) {
+    std::string result;
+    std::unique_copy(line.begin(), line.end(), std::back_inserter(result), [](char a, char b { return std::isspace(a) && std::isspace(b); });
+    result.erase(std::remove_if(result.begin(), result.end(), [](char x return std::isspace(x); }), result.end());
+    return result;
+}
+
+std::string wordWithMostUniqueChars(const std::string& line) {
+    std::istringstream iss(line);
+    std::string word, maxWord;
+    std::set<char> chars, maxChars;
+    while (iss >> word) {
+        chars.clear();
+        for (char c : word) {
+            chars.insert(c);
+        }
+        if (chars.size() > maxChars.size()) {
+            maxChars = chars;
+            maxWord = word;
+        }
+    }
+    return maxWord;
+}
+
+bool isPalindrome(const std::string& word) {
+    return std::equal(word.begin(), word.begin() + word.size() / 2, word.rbegin());
+}
+
+std::string rleCompress(const std::string& line) {
+    std::string result;
+    for (size_t i = 0; i < line.length(); i++) {
+        int count = 1;
+        while (i + 1 < line.length() && line[i] == line[i + 1]) {
+            count++;
+            i++;
+        }
+        result += line[i] + std::to_string(count);
+    }
+    return result;
+}
+
+int maxLengthAlternating(const std::string &line) {
+    int maxLen = 0;
+    int currentLen = (line.empty() ? 0 : 1);
+
+    for (size_t i = 1; i < line.length(); ++i) {
+        if ((std::isalpha(line[i]) && std::isalpha(line[i - 1])) ||
+            (std::isdigit(line[i]) && std::isdigit(line[i - 1]))) {
+            maxLen = std::max(maxLen, currentLen);
+            currentLen = 1;
+        } else {
+            currentLen++;
+        }
+    }
+    maxLen = std::max(maxLen, currentLen);
+    return maxLen;
+}
+
+int main() {
+    std::ifstream file("1.txt");
+    if (!file.is_open()) {
+        std::cerr << "Не удалось открыть файл." << std::endl;
+        return 1;
+    }
+
+    std::string line;
+    int paragraphNumber = 0;
+    int aCount = 0, wordCount = 0, palindromeCount = 0;
+    std::string cleanedLine, maxWord, compressedLine;
+    int maxSequenceLength = 0;
+
+    while (std::getline(file, line)) {
+        if (line == "&") {
+            paragraphNumber++;
+            // Сброс переменных для следующего абзаца
+            aCount = wordCount = palindromeCount = maxSequenceLength = 0;
+            cleanedLine = maxWord = compressedLine = "";
+            continue;
+        }
+
+        switch (paragraphNumber) {
+            case 1:
+                aCount += countA(line);
+                break;
+            case 2:
+                wordCount += countWords(line);
+                break;
+            case 3:
+                cleanedLine = removeExtraSpaces(line);
+                break;
+            case 4:
+                maxWord = wordWithMostUniqueChars(line);
+                break;
+            case 5:
+                compressedLine = rleCompress(line);
+                break;
+            case 6:
+                std::istringstream iss(line);
+                std::string word;
+                while (iss >> word) {
+                    if (isPalindrome(word)) {
+                        palindromeCount++;
+                    }
+                }
+                break;
+            case 7:
+                maxSequenceLength = maxLengthAlternating(line);
+                break;
+        }
+    }
+
+    std::cout << "Количество букв \"а\" в первом абзаце: " << aCount << std::endl;
+    std::cout << "Число слов во втором абзаце: " << wordCount << std::endl;
+    std::cout << "Текст третьего абзаца без лишних пробелов: \"" << cleanedLine << "\"" << std::endl;
+    std::cout << "Слово с наибольшим количеством уникальных символов в четвёртом абзаце: \"" << maxWord << "\"" << std::endl;
+    std::cout << "Сжатый текст пятого абзаца (RLE): \"" << compressedLine << "\"" << std::endl;
+    std::cout << "Количество палиндромов в шестом абзаце: " << palindromeCount << std::endl;
+    std::cout << "Максимальная длина последовательности в седьмом абзаце: " << maxSequenceLength << std::endl;
+
+    file.close();
+    return 0;
+}
